@@ -11,12 +11,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_fix);
 
-        runningtxt1 = (TextView) this.findViewById(R.id.runningText1);
-        runningtxt1.setSelected(true);
-        runningtxt2 = (TextView) this.findViewById(R.id.runningText2);
-        runningtxt2.setSelected(true);
+//        runningtxt1 = (TextView) this.findViewById(R.id.runningText1);
+//        runningtxt1.setSelected(true);
+//        runningtxt2 = (TextView) this.findViewById(R.id.runningText2);
+//        runningtxt2.setSelected(true);
 
     }
 }

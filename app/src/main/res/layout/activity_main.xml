@@ -33,37 +33,38 @@
                 tools:ignore="EllipsizeMaxLines" />
 
     </RelativeLayout>
-    
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_weight="0.7"
         android:background="@color/white">
 
         <Button
             android:id="@+id/buttonLeft"
-            android:layout_width="70dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:backgroundTint="#FF9333"
             android:text="Left"/>
-        
-        <LinearLayout
+
+        <TextView
+            android:id="@+id/tv_score"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:text="123"
+            android:gravity="center"/>
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:id="@+id/scoretxt"
-                android:layout_weight="1"
-                android:text="132"
-                android:elevation="3dp"
-                android:gravity="center"/>
-        </LinearLayout>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"/>
 
-
+        <Button
+            android:id="@+id/buttonRight"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:backgroundTint="#FF9333"
+            android:text="Right"/>
 
     </LinearLayout>
 
