@@ -3,21 +3,29 @@ package com.example.quizmp;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.renderscript.ScriptGroup;
+import android.os.CountDownTimer;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.Reader;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,34 +36,22 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import org.w3c.dom.Text;
 
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener {
     private final String TAG = this.getClass().getSimpleName();
     private TextView tvRunning1, tvRunning2;
+    private TextView tvquestion;
     private TextView upButton, downButton;
     private LinearLayout leftButton, rightButton;
     private TextView tvScore, tvClock;
     private TextView tvAnswer1, tvAnswer2, tvAnswer3, tvAnswer4;
     private  String urlQuestion = "https://mobileprogramming-kaleb.000webhostapp.com/question.php";
-
+    JSONObject obj1, obj2, obj3, obj4;
+    private String quest;
+    private Integer totalscore = 0, i = 0;
+    private JSONArray arr;
+    private   CountDownTimer countdown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,33 +59,40 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         setContentView(R.layout.activity_main_fix);
 
 
-        HttpURLConnection urlConnection = null;
-        try {
-            urlConnection.setDoOutput(true);
-            urlConnection.setChunkedStreamingMode(0);
-           urlConnection.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-
-        }
-
         assignViews();
-//        getQuestion(urlQuestion);
-
         // ASSIGN ON CLICK LISTENER FOR NAVIGATION BUTTON
         upButton.setOnClickListener(this);
         downButton.setOnClickListener(this);
         leftButton.setOnClickListener(this);
         rightButton.setOnClickListener(this);
-
+        tvAnswer1.setOnClickListener(this);
+        tvAnswer2.setOnClickListener(this);
+        tvAnswer3.setOnClickListener(this);
+        tvAnswer4.setOnClickListener(this);
     }
+
     @Override
     public void onClick(View view) {
         if (view.getId() == upButton.getId() || view.getId() == leftButton.getId() || view.getId() == rightButton.getId() || view.getId() == downButton.getId()) {
             showNavigateDialog(view);
         }
+        else{
+            try {
+                if(quest == obj1.getString("question")){
+                    checkAnswer(obj1, view);
+                } else if(quest == obj2.getString("question")){
+                    checkAnswer(obj2, view);
+                } else if(quest == obj3.getString("question")){
+                    checkAnswer(obj3, view);
+                } else if(quest == obj4.getString("question")){
+                    checkAnswer(obj4, view);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
+
 
     private void showNavigateDialog(View view) {
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
@@ -128,7 +131,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         String title = "times up";
 
         alertDialog.setTitle(title);
-        alertDialog.setMessage("this is your message");
+        alertDialog.setMessage("proceed to next question");
 
         // Alert dialog button
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
@@ -144,6 +147,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         tvRunning1 = findViewById(R.id.tv_running_1);
         tvRunning2 = findViewById(R.id.tv_running_2);
 
+        tvquestion = findViewById(R.id.tv_question);
         upButton = findViewById(R.id.btn_up);
         downButton = findViewById(R.id.btn_down);
         leftButton = findViewById(R.id.btn_left);
@@ -156,147 +160,154 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         tvClock = findViewById(R.id.tv_timer);
         tvScore = findViewById(R.id.tv_score);
-    }
 
-    public final List getQuestion(String requestUrl) {
-        URL url = this.createUrl(requestUrl);
-        String jsonResponse = (String) null;
+        tvRunning1.setSelected(true);
+        tvRunning2.setSelected(true);
 
-        try {
-            jsonResponse = this.makeHttpRequest(url);
-        } catch (IOException var5) {
-            Log.e(this.TAG, "Problem making the HTTP request.", (Throwable)var5);
-        }
-
-//        return this.extractFeatureFromJSON(jsonResponse);
-
-        return null;
+        getQuest(urlQuestion);
+        timer(tvClock);
     }
 
 
-    private final URL createUrl(String stringUrl) {
-        URL url = (URL)null;
 
-        try {
-            url = new URL(stringUrl);
+    private void getQuest(String requestUrl){
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, requestUrl, null, new Response.Listener<JSONArray>() {
 
-        } catch (MalformedURLException var4) {
-            Log.e(this.TAG, "Problem building the URL.", (Throwable)var4);
-        }
-        return url;
-    }
+            @Override
+            public void onResponse(JSONArray response) {
+                try {
+                    obj1 = response.getJSONObject(0);
+                    Log.d("response1", obj1.toString());
 
-    private final List extractFeatureFromJSON(String responseJSON) {
-        if (TextUtils.isEmpty((CharSequence)responseJSON)) {
-            return null;
-        } else {
-            List exploreList = (List)(new ArrayList());
+                    obj2 = response.getJSONObject(1);
+                    Log.d("response2", obj2.toString());
 
-            try {
-                JSONObject baseJsonResponse = new JSONObject(responseJSON);
-                JSONArray resultArray = baseJsonResponse.getJSONArray("result");
-                int i = 0;
+                    obj3 = response.getJSONObject(2);
+                    Log.d("response3", obj3.toString());
 
-                for(int var6 = resultArray.length(); i < var6; ++i) {
-                    JSONObject currentExplore = resultArray.getJSONObject(i);
-                    String var10002 = currentExplore.getString("imageURL");
-                    String var10003 = currentExplore.getString("place_name");
-                    String var10004 = currentExplore.getString("place_uid");
+                    obj4 = response.getJSONObject(3);
+                    Log.d("response4", obj4.toString());
 
+                    buildObject(i);
+                    
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException var9) {
-                Log.e(this.TAG, "Problem parsing the news JSON results", (Throwable)var9);
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // TODO: Handle error
+                Log.d("Err", error.getMessage());
+            }
+        });
+        queue.add(jsonArrayRequest);
+    }
+    private void buildObject(Integer i) throws JSONException {
+        arr = new JSONArray();
+        arr.put(obj1);
+        arr.put(obj2);
+        arr.put(obj3);
+        arr.put(obj4);
+
+        JSONObject obj = arr.getJSONObject(i);
+        build(obj);
+
+    }
+
+    private void build(JSONObject obj) throws JSONException {
+        quest = obj.getString("question");
+        String a1 = "1. " + obj.getString("option_1");
+        String a2 = "2. " + obj.getString("option_2");
+        String a3 = "3. " + obj.getString("option_3");
+        String a4 = "4. " + obj.getString("option_4");
+        String build = quest + "\n\n\n\n\n" + a1 + "\n\n" + a2 + "\n\n" + a3 + "\n\n" + a4;
+        tvquestion.setText(build);
+
+    }
+
+    private void checkAnswer(JSONObject obj, View v) throws JSONException {
+        String correctans = obj.getString("answer");
+        String answer = null;
+        if(v.getId() == tvAnswer1.getId()){
+            answer = obj.getString("option_1");
+
+        }
+        else if(v.getId() == tvAnswer2.getId()){
+            answer = obj.getString("option_2");
+        }
+        else if(v.getId() == tvAnswer3.getId()){
+            answer = obj.getString("option_3");
+        }
+        else if(v.getId() == tvAnswer4.getId()){
+            answer = obj.getString("option_4");
+        }
+
+        if(answer.equals(correctans)){
+            totalscore = totalscore + 50;
+            String ts = totalscore.toString();
+            tvScore.setText(ts);
+            Toast toast = Toast.makeText(this, "Your answer is correct", Toast.LENGTH_SHORT);
+            toast.show();
+            if(i < 4){
+                i = i + 1;
+                JSONObject Jobj = arr.getJSONObject(i);
+                build(Jobj);
+                countdown.cancel();
+                timer(tvClock);
             }
 
-            return exploreList;
+        } else{
+            Toast toast = Toast.makeText(this, "Your answer is inccorect", Toast.LENGTH_SHORT);
+            toast.show();
+            if(i < 4){
+//                i = i + 1;
+//                buildObject(i);
+                i = i + 1;
+                JSONObject Jobj = arr.getJSONObject(i);
+                build(Jobj);
+                countdown.cancel();
+                timer(tvClock);
+            }
         }
     }
 
-    private final String readFromStream(InputStream inputStream) throws IOException {
-        StringBuilder output = new StringBuilder();
-        if (inputStream != null) {
-            InputStreamReader inputStreamReader = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-                inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+    private void timer(TextView tvClock){
+        tvClock.setText("40");
+      countdown  = new CountDownTimer(40000, 1000){
+
+            @Override
+            public void onTick(long millisUntilFinished) {
+                String countdown = String.valueOf(millisUntilFinished / 1000);
+                tvClock.setText(countdown);
             }
-            BufferedReader reader = new BufferedReader((Reader)inputStreamReader);
 
-            for(String line = reader.readLine(); line != null; line = reader.readLine()) {
-                output.append(line);
-            }
-        }
-
-        String var10000 = output.toString();
-        Log.e(this.TAG, var10000);
-        return var10000;
-    }
-
-    private final String makeHttpRequest(URL url) throws IOException {
-        String jsonResponse = "";
-        if (url == null) {
-            return jsonResponse;
-        } else {
-
-            InputStream in;
-            try {
-                URL link = new URL(urlQuestion);
-                HttpURLConnection urlConnection = (HttpURLConnection) link.openConnection();
-                if (urlConnection == null) {
-                    throw new NullPointerException("null cannot be cast to non-null type java.net.HttpURLConnection");
+            @Override
+            public void onFinish() {
+                showTimesUpDialog();
+                if(i < 4){
+                    i = i + 1;
+                    JSONObject Jobj = null;
+                    try {
+                        Jobj = arr.getJSONObject(i);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        build(Jobj);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    countdown.cancel();
+                    timer(tvClock);
                 }
-
-              urlConnection.connect(); // ERROR DISNI !!! ERROR DISNI !!! ERROR DISNI !!! ERROR DISNI !!! ERROR DISNI !!!
-//                if (urlConnection.getResponseCode() == 200) {
-//                    Log.e("connection Sucess", "connection Sucess");
-////                    jsonResponse = this.readFromStream(inputStream);
-//                } else {
-//                    Log.e(this.TAG, "Error response code: " + urlConnection.getResponseCode());
-//                }
-//                BufferedReader bin = new BufferedReader(new InputStreamReader(in));
-
-//                String inputline;
-//                while ((inputline = bin.readLine()) != null){
-//                    sb.append(inputline);
-//                }
-            } catch (MalformedURLException e){
-                e.printStackTrace();
-            } catch (IOException e){
-                e.printStackTrace();
             }
-//            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-//            InputStream inputStream = (InputStream)null;
-//
-//            try {
-//                URLConnection connection = url.openConnection();
-//                if (connection == null) {
-//                    throw new NullPointerException("null cannot be cast to non-null type java.net.HttpURLConnection");
-//                }
-//
-//                urlConnection = (HttpURLConnection)connection;
-//
-//                urlConnection.connect();
-////                if (urlConnection.getResponseCode() == 200) {
-//                    inputStream = urlConnection.getInputStream();
-//                    Log.e("connection Sucess", "connection Sucess");
-////                    jsonResponse = this.readFromStream(inputStream);
-//                } else {
-//                    Log.e(this.TAG, "Error response code: " + urlConnection.getResponseCode());
-//                }
-//            } catch (IOException var12) {
-//                Log.e(this.TAG, "Problem retrieving the news JSON results.", (Throwable)var12);
-//            } finally {
-//                if (urlConnection != null) {
-//                    urlConnection.disconnect();
-//                }
-//
-//                if (inputStream != null) {
-//                    inputStream.close();
-//                }
-//
-//            }
-
-            return jsonResponse;
-        }
+        };
+        countdown.start();
     }
+
+
 
 }

@@ -10,7 +10,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0.2"
-        android:text="@string/app_name"
+        android:ellipsize="marquee"
+        android:fadingEdge="horizontal"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:text="Running Text 1 - Information Technology - Mobile Programming - Running Text 1"
         android:gravity="center"/>
 
     <include
@@ -25,7 +30,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0.1"
-        android:text="@string/app_name"
+        android:ellipsize="marquee"
+        android:fadingEdge="horizontal"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:text="Running Text 2 - Information Technology - Mobile Programming - Running Text 2"
         android:gravity="center"/>
 
 </LinearLayout>
